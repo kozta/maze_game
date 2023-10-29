@@ -115,7 +115,6 @@ class MazeGameEnv(gym.Env):
             vabs_ant = self.vabs
         
         plt.figure(figsize=(20,10))
-        #all_series = [list(x)[:100] for x in self.VI.values()]
         all_series = [list(x)[:100] for x in self.vabs.values()]
         for series in all_series:
             plt.plot(series)
