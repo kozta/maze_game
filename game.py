@@ -90,15 +90,15 @@ class MazeGameEnv(gym.Env):
                 # Começa pelas epocas proximas ao destino
                 if passo[0] not in [x[0] for x in epoc[::-1][len(epoc)-i:]]:
                     # Pega posicao que vai ser calculada
-                    idx = (passo[0][0], passo[0][1])
+                    pos = (passo[0][0], passo[0][1])
                     # Monta uma lista de gamma para posição  
-                    self.gamm_arr[idx].append(ga)
+                    self.gamm_arr[pos].append(ga)
                     # Calcula a media de todos os gammas da posicao
-                    newValue = np.average(self.gamm_arr[idx])
+                    newValue = np.average(self.gamm_arr[pos])
                     # Monta uma lista na posição com o calculo do valor absoluto da diferença entre as posições - antiga e nova
-                    self.vabs[idx[0], idx[1]].append(np.abs(self.VI[idx[0], idx[1]]-newValue))
+                    self.vabs[pos[0], pos[1]].append(np.abs(self.VI[pos[0], pos[1]]-newValue))
                     # lista com os valores de interacao 
-                    self.VI[idx[0], idx[1]] = newValue
+                    self.VI[pos[0], pos[1]] = newValue
                     
             if np.array_equiv(self.vabs, vi_ant):
                 #cont += 1
@@ -115,7 +115,8 @@ class MazeGameEnv(gym.Env):
             vabs_ant = self.vabs
         
         plt.figure(figsize=(20,10))
-        all_series = [list(x)[:50] for x in self.vabs.values()]
+        #all_series = [list(x)[:100] for x in self.VI.values()]
+        all_series = [list(x)[:100] for x in self.vabs.values()]
         for series in all_series:
             plt.plot(series)
                 
