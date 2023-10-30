@@ -22,7 +22,8 @@ class MazeGameEnv(gym.Env):
         self.num_rows, self.num_cols = self.maze.shape
         self.VI = np.zeros((self.num_cols, self.num_rows))
         #self.VI = np.zeros((10, 10))
-        
+        self.otimo = []
+        self.converg = 80
         
 
         self.alpha = alpha  # Taxa de aprendizado
@@ -66,20 +67,23 @@ class MazeGameEnv(gym.Env):
         while True:
             # Se estado igual destino encerra a epoca
             if list(begin_state) in self.dest:
+                self.reset()
                 return epocas
             # Seleciona de forma randomica uma ação (cima , esquerda, ...   )
             action = random.choice(self.mc_acoe)
             
             # Retorna os novos estados que podem ser utilizados
             new_state, _, _, _ = self.step(action, 0)  # valida se tem parede ou borda
+
             # Cria lista das epocas
             epocas.append([list(begin_state), action, self.mc_reward, list(new_state)])
 
             begin_state = new_state
             #print (begin_state)
-    
+    # aproximador linear 
     # Monte Carlo
     def MC (self, mc_interactions):
+        conv_epoc = []
         for z in tqdm(range(mc_interactions)):
             epoc = self.epocas()
             ga = 0
@@ -100,12 +104,8 @@ class MazeGameEnv(gym.Env):
                     # lista com os valores de interacao 
                     self.VI[pos[0], pos[1]] = newValue
                     
-            if np.array_equiv(self.vabs, vi_ant):
-                #cont += 1
-                #if cont == 5:    
-                print (f'convergiu !!! Epoca{i} {self.VI}')
-            #else:
-            #    cont = 0
+            if z >= self.converg:  # convergencia de acordo com o grafico
+                conv_epoc.append(epoc)
             
             if z in [100,200,300, 400, mc_interactions-1]:
                 print("Iteration {}".format(z+1))
@@ -118,7 +118,27 @@ class MazeGameEnv(gym.Env):
         all_series = [list(x)[:100] for x in self.vabs.values()]
         for series in all_series:
             plt.plot(series)
-                
+            
+        list(map(len, conv_epoc))        
+    
+        def get_line_len(conv_epoc):
+            return len(conv_epoc),conv_epoc
+        
+        list_converg = sorted(list(map(get_line_len, conv_epoc)))
+
+        print (f'O menos número de passos atingidos em {mc_interactions} interações foram : {list_converg[0][0]}')
+        
+        print (f'Ocorreu na epoca  {(self.converg + list_converg[0][0])} e é considerado como o resultado ótimo para este treinamento')
+        
+        steps = list_converg[0][1]
+        
+        bob_volta_casa = []
+        
+        for item in steps:
+            bob_volta_casa.append((item[3][0], item[3][1]))
+        
+        return bob_volta_casa
+
 
     def train_q_learning(self, num_episodes):
         for episode in range(num_episodes):
@@ -191,11 +211,17 @@ class MazeGameEnv(gym.Env):
             new_pos[1] -= 1
         elif action == 'right':
             new_pos[1] += 1
+   
 
         new_pos = tuple(new_pos)
 
         if self.is_valid_position(new_pos):
-            self.current_pos = new_pos
+           self.current_pos = new_pos
+
+        #if list(new_pos) == [9,9] or list(new_pos) == [9,8]:
+        #    print ('problema!!!')
+    
+        return self.current_pos
 
     def is_valid_position(self, pos):
         row, col = pos
@@ -356,7 +382,7 @@ if __name__ == "__main__":
     # ######################################
     # # TRECHO CHAMADA MONTE CARLO
     env = MazeGameEnv(maze, alpha=0.1, gamma=0.6, epsilon=0.1)
-    env.MC(5000)
+    env.MC(1000)
 
     # # Encontre o caminho ótimo do estado inicial ao estado de destino
     # optimal_path = env.find_optimal_path()
